@@ -1,110 +1,113 @@
 package main
 
-type ParseResult interface {
-	isParseResult()
+type ParseResult[T any] struct {
+	success bool
+	val     T
 }
 
-type Parser func([]byte, int) (ParseResult, int)
+type Parser[T any] func([]byte, int) (ParseResult[T], int)
 
-type Char byte
-type Int int
-type String string
-type List []ParseResult
+func fail[T any]() ParseResult[T] {
+	var zeroVal T
+	return ParseResult[T]{success: false, val: zeroVal}
+}
 
-func (c Char) isParseResult()   {}
-func (i Int) isParseResult()    {}
-func (s String) isParseResult() {}
-func (prs List) isParseResult() {}
+func succeed[T any](val T) ParseResult[T] {
+	return ParseResult[T]{success: true, val: val}
+}
 
-func char(c byte) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func char(c byte) Parser[byte] {
+	return func(source []byte, loc int) (ParseResult[byte], int) {
 		if loc >= len(source) {
-			return nil, loc
+			return fail[byte](), loc
 		}
 		if c == source[loc] {
-			return Char(c), loc + 1
+			return succeed(c), loc + 1
 		}
-		return nil, loc
+		return fail[byte](), loc
 	}
 }
 
-func digit() Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func digit() Parser[int] {
+	return func(source []byte, loc int) (ParseResult[int], int) {
 		if loc >= len(source) {
-			return nil, loc
+			return fail[int](), loc
 		}
 		c := source[loc]
 		if c >= '0' && c <= '9' {
-			return Int(c - '0'), loc + 1
+			return succeed(int(c - '0')), loc + 1
 		}
-		return nil, loc
+		return fail[int](), loc
 	}
 }
 
-func apply(f func(ParseResult) ParseResult, p Parser) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func apply[T1 any, T2 any](f func(ParseResult[T1]) ParseResult[T2], p Parser[T1]) Parser[T2] {
+	return func(source []byte, loc int) (ParseResult[T2], int) {
 		res, loc2 := p(source, loc)
 		return f(res), loc2
 	}
 }
 
-func seq(ps []Parser) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func seq[T any](ps []Parser[T]) Parser[[]T] {
+	return func(source []byte, loc int) (ParseResult[[]T], int) {
 		if loc >= len(source) {
-			return nil, loc
+			return fail[[]T](), loc
 		}
 		loc2 := loc
-		var res []ParseResult
+		var res ParseResult[[]T]
 		for _, p := range ps {
-			var r ParseResult
+			var r ParseResult[T]
 			r, loc2 = p(source, loc2)
-			if r == nil {
-				return nil, loc
+			if !r.success {
+				return fail[[]T](), loc
 			}
-			res = append(res, r)
+			res.val = append(res.val, r.val)
 		}
-		return List(res), loc2
+		res.success = true
+		return res, loc2
 	}
 }
 
-func choice(ps []Parser) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func choice[T any](ps []Parser[T]) Parser[T] {
+	return func(source []byte, loc int) (ParseResult[T], int) {
 		if loc >= len(source) {
-			return nil, loc
+			return fail[T](), loc
 		}
 		for _, p := range ps {
 			res, loc2 := p(source, loc)
-			if res != nil {
+			if res.success {
 				return res, loc2
 			}
 		}
-		return nil, loc
+		return fail[T](), loc
 	}
 }
 
-func many(p Parser) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
-		var res []ParseResult
+func many[T any](p Parser[T]) Parser[[]T] {
+	return func(source []byte, loc int) (ParseResult[[]T], int) {
+		var res ParseResult[[]T]
 		pr, loc := p(source, loc)
-		for pr != nil {
-			res = append(res, pr)
+		for pr.success {
+			res.val = append(res.val, pr.val)
 			pr, loc = p(source, loc)
 		}
-		return List(res), loc
+		res.success = true
+		return res, loc
 	}
 }
 
-func many1(p Parser) Parser {
-	return func(source []byte, loc int) (ParseResult, int) {
+func many1[T any](p Parser[T]) Parser[[]T] {
+	return func(source []byte, loc int) (ParseResult[[]T], int) {
 		pr, loc2 := p(source, loc)
-		if pr == nil {
-			return nil, loc
+		if !pr.success {
+			return fail[[]T](), loc
 		}
-		var res []ParseResult
-		for pr != nil {
-			res = append(res, pr)
+		var res ParseResult[[]T]
+		for pr.success {
+			res.val = append(res.val, pr.val)
 			pr, loc2 = p(source, loc2)
 		}
-		return List(res), loc2
+		res.success = true
+		return res, loc2
 	}
 }
