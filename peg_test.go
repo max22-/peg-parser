@@ -24,18 +24,9 @@ func TestDigit(t *testing.T) {
 
 func TestSeqAndApply(t *testing.T) {
 	source := "abcd"
-	f := func(bs ParseResult[[]byte]) ParseResult[string] {
-		var res ParseResult[string]
-		res.success = false
-		if bs.success {
-			res.val = string(bs.val)
-			res.success = true
-		}
-		return res
-	}
 	parser := seq[byte]([]Parser[byte]{char('a'), char('b'), char('c')})
 	result := succeed("abc")
-	genericTest(t, apply(f, parser), source, result, 3)
+	genericTest(t, apply(func(bs []byte) string { return string(bs) }, parser), source, result, 3)
 }
 
 func TestChoice(t *testing.T) {

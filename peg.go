@@ -41,10 +41,17 @@ func digit() Parser[int] {
 	}
 }
 
-func apply[T1 any, T2 any](f func(ParseResult[T1]) ParseResult[T2], p Parser[T1]) Parser[T2] {
+func apply[T1 any, T2 any](f func(T1) T2, p Parser[T1]) Parser[T2] {
 	return func(source []byte, loc int) (ParseResult[T2], int) {
-		res, loc2 := p(source, loc)
-		return f(res), loc2
+		res1, loc2 := p(source, loc)
+		var res2 ParseResult[T2]
+		if res1.success {
+			res2.val = f(res1.val)
+			res2.success = true
+			return res2, loc2
+		} else {
+			return res2, loc
+		}
 	}
 }
 
