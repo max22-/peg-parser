@@ -8,10 +8,12 @@ type Parser func([]byte, int) (ParseResult, int)
 
 type Char byte
 type Int int
+type String string
 type List []ParseResult
 
 func (c Char) isParseResult()   {}
 func (i Int) isParseResult()    {}
+func (s String) isParseResult() {}
 func (prs List) isParseResult() {}
 
 func char(c byte) Parser {
@@ -36,6 +38,13 @@ func digit() Parser {
 			return Int(c - '0'), loc + 1
 		}
 		return nil, loc
+	}
+}
+
+func apply(f func(ParseResult) ParseResult, p Parser) Parser {
+	return func(source []byte, loc int) (ParseResult, int) {
+		res, loc2 := p(source, loc)
+		return f(res), loc2
 	}
 }
 
@@ -82,5 +91,20 @@ func many(p Parser) Parser {
 			pr, loc = p(source, loc)
 		}
 		return List(res), loc
+	}
+}
+
+func many1(p Parser) Parser {
+	return func(source []byte, loc int) (ParseResult, int) {
+		pr, loc2 := p(source, loc)
+		if pr == nil {
+			return nil, loc
+		}
+		var res []ParseResult
+		for pr != nil {
+			res = append(res, pr)
+			pr, loc2 = p(source, loc2)
+		}
+		return List(res), loc2
 	}
 }
