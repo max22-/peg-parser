@@ -80,3 +80,29 @@ func TestMany1(t *testing.T) {
 		t.Errorf("loc = %d; want 3", loc)
 	}
 }
+
+func TestMaybe(t *testing.T) {
+	parser := maybe(char('a'))
+	result, loc := parser([]byte("bcd"), 0)
+	if !result.success {
+		t.Error("result.success = false; want true")
+	}
+	if result.val != nil {
+		t.Errorf("result.val = %v; want nil", result.val)
+	}
+	if loc != 0 {
+		t.Errorf("loc = %d; want 0", loc)
+	}
+
+	result, loc = parser([]byte("abcd"), 0)
+	expected := byte('a')
+	if !result.success {
+		t.Error("result.success = false; want true")
+	}
+	if *result.val != expected {
+		t.Errorf("result.val = %v; want %v", result.val, expected)
+	}
+	if loc != 1 {
+		t.Errorf("loc = %d; want 1", loc)
+	}
+}

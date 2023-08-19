@@ -118,3 +118,18 @@ func many1[T any](p Parser[T]) Parser[[]T] {
 		return res, loc2
 	}
 }
+
+func maybe[T any](p Parser[T]) Parser[*T] {
+	return func(source []byte, loc int) (ParseResult[*T], int) {
+		pr, loc2 := p(source, loc)
+		var res ParseResult[*T]
+		res.success = true
+		if pr.success {
+			res.val = &pr.val
+			return res, loc2
+		} else {
+			res.val = nil
+			return res, loc
+		}
+	}
+}
