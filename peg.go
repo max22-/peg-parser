@@ -133,3 +133,17 @@ func maybe[T any](p Parser[T]) Parser[*T] {
 		}
 	}
 }
+
+func and[T1 any, T2 any](p1 Parser[T1], p2 Parser[T2]) Parser[T1] {
+	return func(source []byte, loc int) (ParseResult[T1], int) {
+		pr1, loc1 := p1(source, loc)
+		if !pr1.success {
+			return fail[T1](), loc
+		}
+		pr2, _ := p2(source, loc1)
+		if !pr2.success {
+			return fail[T1](), loc
+		}
+		return pr1, loc1
+	}
+}

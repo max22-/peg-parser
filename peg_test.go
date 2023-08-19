@@ -1,8 +1,21 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 )
+
+func assertEqual[T comparable](t *testing.T, name string, val T, expected T) {
+	if val != expected {
+		t.Errorf("%s = %v; want %v", name, val, expected)
+	}
+}
+
+func assertEqualSlice[T comparable](t *testing.T, name string, val []T, expected []T) {
+	if !reflect.DeepEqual(val, expected) {
+		t.Errorf("%s = %v; want %v", name, val, expected)
+	}
+}
 
 func genericTest[T comparable](t *testing.T, parser Parser[T], source string, expected ParseResult[T], loc int) {
 	result, loc2 := parser([]byte(source), 0)
@@ -105,4 +118,24 @@ func TestMaybe(t *testing.T) {
 	if loc != 1 {
 		t.Errorf("loc = %d; want 1", loc)
 	}
+}
+
+func TestAnd(t *testing.T) {
+	parser := and(char('a'), char('b'))
+	result, loc := parser([]byte("abc"), 0)
+	assertEqual(t, "result.success", result.success, true)
+	assertEqual(t, "result.val", result.val, 'a')
+	assertEqual(t, "loc", loc, 1)
+
+	result, loc = parser([]byte("acb"), 0)
+	var zeroChar byte
+	assertEqual(t, "result.success", result.success, false)
+	assertEqual(t, "result.val", result.val, zeroChar)
+	assertEqual(t, "loc", loc, 0)
+
+	result, loc = parser([]byte("bbc"), 0)
+	assertEqual(t, "result.success", result.success, false)
+	assertEqual(t, "result.val", result.val, zeroChar)
+	assertEqual(t, "loc", loc, 0)
+
 }
