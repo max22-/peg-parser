@@ -147,3 +147,12 @@ func and[T1 any, T2 any](p1 Parser[T1], p2 Parser[T2]) Parser[T1] {
 		return pr1, loc1
 	}
 }
+
+func not[T any](p Parser[T]) Parser[T] {
+	return func(source []byte, loc int) (ParseResult[T], int) {
+		var res ParseResult[T]
+		pr, _ := p(source, loc)
+		res.success = !pr.success
+		return res, 0
+	}
+}

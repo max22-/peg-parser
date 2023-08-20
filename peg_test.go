@@ -137,5 +137,18 @@ func TestAnd(t *testing.T) {
 	assertEqual(t, "result.success", result.success, false)
 	assertEqual(t, "result.val", result.val, zeroChar)
 	assertEqual(t, "loc", loc, 0)
+}
 
+func TestNot(t *testing.T) {
+	parser := not(char('a'))
+	var zeroChar byte
+	result, loc := parser([]byte("abc"), 0)
+	assertEqual(t, "result.success", result.success, false)
+	assertEqual(t, "result.val", result.val, zeroChar)
+	assertEqual(t, "loc", loc, 0)
+
+	result, loc = parser([]byte("bbc"), 0)
+	assertEqual(t, "result.success", result.success, true)
+	assertEqual(t, "result.val", result.val, zeroChar)
+	assertEqual(t, "loc", loc, 0)
 }
