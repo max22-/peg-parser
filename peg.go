@@ -156,3 +156,15 @@ func Not[T any](p Parser[T]) Parser[T] {
 		return res, 0
 	}
 }
+
+func Eof[T any]() Parser[T] {
+	return func(source []byte, loc int) (ParseResult[T], int) {
+		var res ParseResult[T]
+		if loc == len(source) {
+			res.success = true
+		} else {
+			res.success = false
+		}
+		return res, loc
+	}
+}

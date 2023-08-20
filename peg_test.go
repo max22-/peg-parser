@@ -152,3 +152,11 @@ func TestNot(t *testing.T) {
 	assertEqual(t, "result.val", result.val, zeroChar)
 	assertEqual(t, "loc", loc, 0)
 }
+
+func TestEof(t *testing.T) {
+	parser := And(Many1(Digit()), Eof[[]int]())
+	result, loc := parser([]byte("123"), 0)
+	assertEqual(t, "result.success", result.success, true)
+	assertEqualSlice(t, "result.val", result.val, []int{1, 2, 3})
+	assertEqual(t, "loc", loc, 3)
+}
