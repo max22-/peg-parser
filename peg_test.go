@@ -11,7 +11,7 @@ func assertEqual[T comparable](t *testing.T, name string, val T, expected T) {
 	}
 }
 
-func assertEqualSlice[T comparable](t *testing.T, name string, val []T, expected []T) {
+func assertEqualSlice[T any](t *testing.T, name string, val []T, expected []T) {
 	if !reflect.DeepEqual(val, expected) {
 		t.Errorf("%s = %v; want %v", name, val, expected)
 	}
