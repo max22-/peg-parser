@@ -1,4 +1,4 @@
-package main
+package pegparser
 
 import (
 	"reflect"
@@ -28,29 +28,29 @@ func genericTest[T comparable](t *testing.T, parser Parser[T], source string, ex
 }
 
 func TestChar(t *testing.T) {
-	genericTest(t, char('a'), "abc", succeed(byte('a')), 1)
+	genericTest(t, Char('a'), "abc", succeed(byte('a')), 1)
 }
 
 func TestDigit(t *testing.T) {
-	genericTest(t, digit(), "123", succeed(1), 1)
+	genericTest(t, Digit(), "123", succeed(1), 1)
 }
 
 func TestSeqAndApply(t *testing.T) {
 	source := "abcd"
-	parser := seq[byte]([]Parser[byte]{char('a'), char('b'), char('c')})
+	parser := Seq[byte]([]Parser[byte]{Char('a'), Char('b'), Char('c')})
 	result := succeed("abc")
-	genericTest(t, apply(func(bs []byte) string { return string(bs) }, parser), source, result, 3)
+	genericTest(t, Apply(func(bs []byte) string { return string(bs) }, parser), source, result, 3)
 }
 
 func TestChoice(t *testing.T) {
-	parser := choice[byte]([]Parser[byte]{char('a'), char('b')})
+	parser := Choice[byte]([]Parser[byte]{Char('a'), Char('b')})
 	genericTest(t, parser, "abc", succeed(byte('a')), 1)
 	genericTest(t, parser, "bbc", succeed(byte('b')), 1)
 }
 
 func TestMany(t *testing.T) {
 	source := "123abc"
-	parser := many(digit())
+	parser := Many(Digit())
 	expected := succeed([]int{1, 2, 3})
 	result, loc := parser([]byte(source), 0)
 	if !result.success {
@@ -70,7 +70,7 @@ func TestMany(t *testing.T) {
 }
 
 func TestMany1(t *testing.T) {
-	parser := many1(char('a'))
+	parser := Many1(Char('a'))
 	result, loc := parser([]byte("bcd"), 0)
 	if result.success {
 		t.Errorf("result.success = true; want false")
@@ -95,7 +95,7 @@ func TestMany1(t *testing.T) {
 }
 
 func TestMaybe(t *testing.T) {
-	parser := maybe(char('a'))
+	parser := Maybe(Char('a'))
 	result, loc := parser([]byte("bcd"), 0)
 	if !result.success {
 		t.Error("result.success = false; want true")
@@ -121,7 +121,7 @@ func TestMaybe(t *testing.T) {
 }
 
 func TestAnd(t *testing.T) {
-	parser := and(char('a'), char('b'))
+	parser := And(Char('a'), Char('b'))
 	result, loc := parser([]byte("abc"), 0)
 	assertEqual(t, "result.success", result.success, true)
 	assertEqual(t, "result.val", result.val, 'a')
@@ -140,7 +140,7 @@ func TestAnd(t *testing.T) {
 }
 
 func TestNot(t *testing.T) {
-	parser := not(char('a'))
+	parser := Not(Char('a'))
 	var zeroChar byte
 	result, loc := parser([]byte("abc"), 0)
 	assertEqual(t, "result.success", result.success, false)

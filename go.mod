@@ -1,3 +1,3 @@
-module github.com/max22-/peg-parser
+module github.com/max22-/pegparser
 
 go 1.20
